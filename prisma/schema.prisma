@@ -1,0 +1,68 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  phone     String?  @unique
+  name      String
+  role      Role     @default(CUSTOMER)
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  accounts           Account[]
+  sessions           Session[]
+  deliveries         Delivery[]
+  deliveriesAccepted Delivery[] @relation("DeliveryAccepted")
+  payments           Payment[]
+  reviewsGiven       Review[]   @relation("ReviewGiven")
+  reviewsReceived    Review[]   @relation("ReviewReceived")
+  messages           Message[]
+  notifications      Notification[]
+}
+
+model Delivery {
+  id          String      @id @default(cuid())
+  customerId  String
+  agentId     String?
+  status      DeliveryStatus @default(PENDING)
+  pickup      Json        // { address, lat, lng }
+  dropoff     Json        // { address, lat, lng }
+  itemDetails Json        // { description, weight, value }
+  price       Float?
+  distance    Float?      // in km
+  estimatedTime Int?      // in minutes
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deliveredAt DateTime?
+
+  customer    User        @relation(fields: [customerId], references: [id])
+  agent       User?       @relation("DeliveryAccepted", fields: [agentId], references: [id])
+  payments    Payment[]
+  reviews     Review[]
+  messages    Message[]
+  tracking    Tracking[]
+}
+
+enum Role {
+  CUSTOMER
+  AGENT
+  ADMIN
+}
+
+enum DeliveryStatus {
+  PENDING
+  ACCEPTED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
