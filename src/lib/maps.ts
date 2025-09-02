@@ -63,3 +63,31 @@
     
     return Math.ceil(price * 2) / 2;
     };
+
+
+
+export const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number }> => {
+    try {
+    const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?` +
+        `address=${encodeURIComponent(address)}&` +
+        `key=${process.env.GOOGLE_MAPS_API_KEY}`
+        );
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === "OK" && data.results.length > 0) {
+            const location = data.results[0].geometry.location;
+            return { lat: location.lat, lng: location.lng };
+        } else {
+            throw new Error(`Geocoding failed for address: ${address}`);
+        }
+        } catch (error) {
+        console.error("Error geocoding address:", error);
+        throw error;
+        }
+    };
