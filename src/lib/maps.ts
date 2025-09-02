@@ -1,4 +1,44 @@
     import { cacheGet, cacheSet } from "@/lib/cache";
+    import {Loader} from "@googlemaps/js-api-loader"
+
+const loader=new Loader({
+    apiKey:process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+    version:"weekly",
+    libraries:["places","geometry"],
+})
+
+
+export const initializeMap=async (container:HTMLElement,options:google.maps.MapOptions)=>{
+    await loader.load();
+    return new google.maps.Map(container, options);
+}
+
+
+export const calculateRoute = async (
+    origin: { lat: number; lng: number },
+    destination: { lat: number; lng: number }
+    ): Promise<google.maps.DirectionsResult> => {
+        const { DirectionsService } = await loader.importLibrary("routes");
+        const directionsService = new DirectionsService();
+    
+        return new Promise((resolve, reject) => {
+        directionsService.route(
+            {
+            origin,
+            destination,
+            travelMode: google.maps.TravelMode.DRIVING,
+            },
+            (result, status) => {
+            if (status === "OK" && result) {
+                resolve(result);
+            } else {
+                reject(new Error(`Directions request failed due to ${status}`));
+            }
+            }
+        );
+        });
+    };
+
 
     export const calculateDistance = async (
     origin: { lat: number; lng: number },
@@ -91,3 +131,6 @@ export const geocodeAddress = async (address: string): Promise<{ lat: number; ln
         throw error;
         }
     };
+
+
+    
